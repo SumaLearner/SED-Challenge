@@ -1,32 +1,70 @@
 Role Name
 =========
 
-A brief description of the role goes here.
+ansible role aws_ec2_webserver creates aws ec2 instances and installs, configured apache to host a static web page 
+   
+	1. tasks/main.yml 
+		- creates security group with ingress to allow connect on tcp port 22, 80, 443 and egres rules 
+		- uses ec2 or ec2_asg module to launch ec2 instance or ec2 auto scaling group (to address scalability)
+		- Add the newly created host to inventory so that we can contact it
+		- Wait for SSH connection
+		- execute tasks in webserver.yml
+	2. tasks/webserver.yml
+		- On the newly created ec2 istance install httpd
+		- configure apache as below
+		- copy the httpd.conf containing <virtualhost> config for https redirection
+		- copy the index file to document root
+		- copy self signed certficates under /etc/ssl
+		- start and enable httpd 
+	3. files/httpd.conf
+	   files/mysite.crt
+	   files/mysite.key
+	   files/index.html
 
+	4. vars/main.yml
+	   vars/aws_keys.yml #### vaulted aws keys
 Requirements
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+The role uses the EC2 module, hence the VM on which this role is executed requires boto package to be intalled .
 
 Role Variables
 --------------
+vars/main.yml: Config vars for ec2 instance launch 
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+instance_type: t2.micro
+security_group:
+image: ami-0b500ef59d8335eee
+keypair: default
+region: us-east-2
+
+vars/aws_keys.yml #### vaulted aws keys
 
 Dependencies
 ------------
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+NA
 
 Example Playbook
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+example of how to use your:
 
+---
+- hosts: local
+  connection: local #this makes sure it is local connection and doesnt need ssh 
+  gather_facts: False 
+
+- roles:
+     - aws-ec2-webserver
+
+
+
+command to execute the playbook: 
+
+   ansible-playbook -i hosts -ask-vault-pass provision-web-server.yml
+   
 License
 -------
 
@@ -35,4 +73,4 @@ BSD
 Author Information
 ------------------
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+Suma Nataraj
