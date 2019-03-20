@@ -1,0 +1,16 @@
+---
+  aws_instance_type: t2.micro
+
+  aws_region: us-east-2a
+  aws_subnet_id: subnet-default
+
+  aws_security_group:
+  aws_public_key_name:
+
+  aws_image_AMI: ami-default
+  aws_private_IP:
+
+  aws_volumes:
+  - device_name: /dev/sda1
+    volume_type: gp2
+

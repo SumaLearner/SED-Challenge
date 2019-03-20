@@ -1,0 +1,70 @@
+---
+# tasks file for aws-ec2-webserver
+- name: Create a security group
+      ec2_group:
+        name: "{{ security_group }}"
+        description: The webservers security group
+        region: "{{ region }}"
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        rules:
+          - proto: tcp
+            from_port: 22
+            to_port: 22
+            cidr_ip: 0.0.0.0/0
+          - proto: tcp
+            from_port: 80
+            to_port: 80
+            cidr_ip: 0.0.0.0/0
+          - proto: tcp
+            from_port: 443
+            to_port: 443
+            cidr_ip: 0.0.0.0/0
+        rules_egress:
+          - proto: all
+            cidr_ip: 0.0.0.0/0
+
+- name: Launch the new EC2 Instance ## one of the below approach can be used
+  ec2:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        group: "{{ security_group }}"
+        instance_type: "{{ instance_type }}"
+        image: "{{ image }}"
+        wait: true
+        region: "{{ region }}"
+        keypair: "{{ keypair }}"
+        count: "{{count}}"
+      register: ec2
+
+#OR
+- name: create auto scaling group
+- ec2_asg:
+    name: webservers
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    load_balancers: [ 'lb1', 'lb2' ]
+    availability_zones: [ 'us-east-2a', 'us-east-2b' ]
+    launch_config_name: 'lc-1'
+    min_size: 1
+    max_size: 3
+    desired_capacity: 2
+    vpc_zone_identifier: [ 'subnet-abcd1234', 'subnet-1a2b3c4d' ]
+  register: ec2
+
+- name: Add the newly created host to inventory so that we can contact it
+  add_host:
+    name: "{{ item.public_ip }}"
+    groups: webservers
+  with_items: "{{ ec2.instances }}"
+
+
+- name: Wait for SSH connection
+  wait_for:
+    host: "{{ item.public_ip }}"
+    port: 22
+    state: started
+  with_items: "{{ ec2.instances }}"
+
+- name: include tasks to install and configure apache
+ include_tasks: webserver.yml

@@ -1,0 +1,8 @@
+---
+# vars file for aws-ec2-webserver
+instance_type: t2.micro
+security_group: 
+image: ami-0b500ef59d8335eee
+keypair: default
+region: us-east-2
+
